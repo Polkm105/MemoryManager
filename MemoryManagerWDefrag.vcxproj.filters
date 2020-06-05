@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{ffe7b3b4-c67a-4e11-8ec1-8598cba29220}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Manager">
+      <UniqueIdentifier>{683a70cb-8705-4f7e-a5ba-af82fe03b3b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Blocks">
+      <UniqueIdentifier>{0771f788-1b65-4529-ae61-623676e18175}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Pages">
+      <UniqueIdentifier>{2fa3a5e0-6868-4d05-81d2-5525c70527f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Sizes">
+      <UniqueIdentifier>{b1181eb8-09b1-467a-9548-847f63d4b309}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\Stub.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MemoryManager.cpp">
+      <Filter>Source\Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MemoryBlock.cpp">
+      <Filter>Source\Blocks</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Main.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MemoryAllocated.cpp">
+      <Filter>Source\Blocks</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MemoryPage.cpp">
+      <Filter>Source\Pages</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\Stub.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\MemoryManager.h">
+      <Filter>Source\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\MemoryBlock.h">
+      <Filter>Source\Blocks</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\MemoryAllocated.h">
+      <Filter>Source\Blocks</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\MemoryPage.h">
+      <Filter>Source\Pages</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
