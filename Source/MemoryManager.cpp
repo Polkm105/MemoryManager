@@ -19,6 +19,7 @@
 #include "MemoryBlock.h"
 #include "MemoryAllocated.h"
 #include "MemoryPage.h"
+#include "MemoryAllocator.h"
 #include <set>
 #include <unordered_map>
 #include <vector>
@@ -30,10 +31,11 @@
 // Private Consts
 //-----------------------------------------------------------------------------
 
-const unsigned int PAGE_SIZE = 16000;  //!< a page is 8000 bytes in size
+const size_t PAGE_SIZE = 16000;  //!< a page is 16000 bytes in size
 
-#define MANAGER_SIZE_TABLE std::unordered_multimap<unsigned int, MemoryBlock>
-#define MANAGER_LOC_TABLE std::unordered_map<void*, MemoryBlock>
+#define MANAGER_SIZE_TABLE std::unordered_multimap<size_t, MemoryBlock, std::hash<size_t>, std::equal_to<size_t>, MemoryAllocator<std::pair<const size_t, MemoryBlock> > >
+
+#define MANAGER_LOC_TABLE std::unordered_map<void*, MemoryBlock, std::hash<void*>, std::equal_to<void*>, MemoryAllocator<std::pair<const void*, MemoryBlock>>>
 
 //-----------------------------------------------------------------------------
 // Private Classes
@@ -45,9 +47,8 @@ class MemoryManager
 public:
 
   MemoryManager(void);
-  MemoryManager(unsigned int numPages);
 
-  void* Allocate(unsigned int memSize);
+  void* Allocate(size_t memSize);
   void Destroy(void* ptr);
 
   friend void MemoryManagerInit(void);
@@ -57,17 +58,17 @@ private:
 
   MemoryBlock mHeap;      //!< the current heap of the manager
 
-  std::vector<MemoryPage> mPageVec; //!< a vector of all allocated pages
+  std::vector<MemoryPage, MemoryAllocator<MemoryPage>> mPageVec; //!< a vector of all allocated pages
 
   MANAGER_SIZE_TABLE mFreeSize; //!< hash table of all free blocks sorted by size, inserted by elementSize * numElements
   MANAGER_LOC_TABLE mFreeLoc;   //!< hash table of all free blocks sorted by location, inserted by MemoryBlock void*
 
 
-  void* AllocatePage(unsigned int pageSize = PAGE_SIZE);
-  void* AllocateMemoryFromHeap(unsigned int size);
+  void* AllocatePage(size_t pageSize = PAGE_SIZE);
+  void* AllocateMemoryFromHeap(size_t size);
   void AddPageToFree(void* page);
   void AddBlockToFree(MemoryBlock& block);
-  void MoveBlock(MemoryBlock& block, int amount, bool right);
+  void MoveBlock(MemoryBlock& block, size_t amount, bool right);
   bool GetHeapFromFreeMap(void);
   bool IsInPage(void* ptr, unsigned int pageIndex) const;
   unsigned int PageIndex(void* ptr) const;
@@ -79,7 +80,7 @@ MemoryManager manager;
 // Private Function Declerations
 //-----------------------------------------------------------------------------
 
-MANAGER_SIZE_TABLE::iterator SearchSizeTable(void* ptr, unsigned int size, MANAGER_SIZE_TABLE& table);
+MANAGER_SIZE_TABLE::iterator SearchSizeTable(void* ptr, size_t size, MANAGER_SIZE_TABLE& table);
 MANAGER_LOC_TABLE::iterator SearchLocTable(void* ptr, MANAGER_LOC_TABLE& table);
 
 //-----------------------------------------------------------------------------
@@ -93,14 +94,14 @@ MANAGER_LOC_TABLE::iterator SearchLocTable(void* ptr, MANAGER_LOC_TABLE& table);
 void MemoryManagerInit(void)
 {
   // for all pages in the manager
-  for (unsigned int i = 0; i < manager.mPageVec.size(); ++i)
+  for (unsigned int i = 0; i < 20; ++i)
   {
     void* page = manager.AllocatePage();  // allocate a new page
 
     MemoryBlock temp(page, PAGE_SIZE);
 
     manager.mFreeLoc.insert(std::pair<void*, MemoryBlock>(temp.MemoryLocation(), temp));  // insert new block into free loc table
-    manager.mFreeSize.insert(std::pair<unsigned int, MemoryBlock>(temp.Size(), temp));
+    manager.mFreeSize.insert(std::pair<size_t, MemoryBlock>(temp.Size(), temp));
   }
 
   manager.GetHeapFromFreeMap(); // get the heap
@@ -112,8 +113,10 @@ void MemoryManagerInit(void)
 ******************************************************************************/
 void MemoryManagerShutdown(void)
 {
+  size_t size = manager.mPageVec.size();
+  
   // for all allocated pages in manager
-  for (unsigned int i = 0; i < manager.mPageVec.size(); ++i)
+  for (size_t i = 0; i < size; ++i)
   {
     manager.mPageVec[i].Destroy();  // free current page
   }
@@ -129,7 +132,17 @@ void MemoryManagerShutdown(void)
 \return
   a pointer to the allocated memory
 ******************************************************************************/
-void* New(unsigned int size)
+void* operator new(size_t size)
+{
+  if (size)
+  {
+    return manager.Allocate(size);
+  }
+
+  return NULL;
+}
+
+void* operator new[](size_t size)
 {
   if (size)
   {
@@ -146,7 +159,15 @@ void* New(unsigned int size)
 \param ptr
   the pointer to delete
 ******************************************************************************/
-void Delete(void* ptr)
+void operator delete(void* ptr)
+{
+  if (ptr)
+  {
+    manager.Destroy(ptr);
+  }
+}
+
+void operator delete[](void* ptr)
 {
   if (ptr)
   {
@@ -174,7 +195,7 @@ void Delete(void* ptr)
 \return
   an iterator to the matching block, else returns the end of the size table
 ******************************************************************************/
-MANAGER_SIZE_TABLE::iterator SearchSizeTable(void* ptr, unsigned int size, MANAGER_SIZE_TABLE& table)
+MANAGER_SIZE_TABLE::iterator SearchSizeTable(void* ptr, size_t size, MANAGER_SIZE_TABLE& table)
 {
   std::pair<MANAGER_SIZE_TABLE::iterator, MANAGER_SIZE_TABLE::iterator> temp = table.equal_range(size);
 
@@ -247,7 +268,7 @@ MemoryManager::MemoryManager(void) :
 \return
   a pointer to the memory allocated
 ******************************************************************************/
-void* MemoryManager::Allocate(unsigned int memSize)
+void* MemoryManager::Allocate(size_t memSize)
 {
   void* mem = NULL;
   MANAGER_SIZE_TABLE::iterator it = mFreeSize.find(memSize);
@@ -314,7 +335,7 @@ void MemoryManager::Destroy(void* ptr)
   MemoryBlock temp(ptr, memSize);
 
   mFreeLoc.insert(std::pair<void*, MemoryBlock>(ptr, temp));
-  mFreeSize.insert(std::pair<unsigned int, MemoryBlock>(memSize, temp));
+  mFreeSize.insert(std::pair<size_t, MemoryBlock>(memSize, temp));
 }
 
 
@@ -351,7 +372,7 @@ unsigned int MemoryManager::PageIndex(void* ptr) const
 \return
   a pointer to the user usable memory
 ******************************************************************************/
-void* MemoryManager::AllocatePage(unsigned int pageSize)
+void* MemoryManager::AllocatePage(size_t pageSize)
 {
   static unsigned int pageIndex = 0;
 
@@ -360,7 +381,6 @@ void* MemoryManager::AllocatePage(unsigned int pageSize)
     // if page was allocated
   if (page)
   {
-
     mPageVec.push_back(MemoryPage(page, pageSize)); // add page to back of mPages
 
     return (void*)((uintptr_t)(page)+sizeof(MemoryAllocated));  // move to user usable memory
@@ -381,9 +401,9 @@ void* MemoryManager::AllocatePage(unsigned int pageSize)
 \return
   a pointer to the memory if heap is big enough, else NULL
 ******************************************************************************/
-void* MemoryManager::AllocateMemoryFromHeap(unsigned int size)
+void* MemoryManager::AllocateMemoryFromHeap(size_t size)
 {
-  unsigned int heapSize = mHeap.Size();                     // the current size of the heap
+  size_t heapSize = mHeap.Size();                     // the current size of the heap
 
     // if heap is perfect size or heap can be split after allocation
   if ((heapSize == size) || (heapSize > size + sizeof(MemoryAllocated)))
@@ -404,7 +424,7 @@ void* MemoryManager::AllocateMemoryFromHeap(unsigned int size)
     // if heap is being split
     else
     {
-      MoveBlock(mHeap, size + sizeof(MemoryAllocated), true); // move the heap to the next block location
+      MoveBlock(mHeap, (size_t)(size + sizeof(MemoryAllocated)), true); // move the heap to the next block location
     }
 
     return memory;  // return allocated memory
@@ -426,7 +446,7 @@ void MemoryManager::AddPageToFree(void* page)
   unsigned int size = PAGE_SIZE - sizeof(MemoryAllocated);      // size of usable memory
 
   MemoryBlock temp(page, size);                                       // create a page block
-  mFreeSize.insert(std::pair<unsigned int, MemoryBlock>(size, temp)); // add page to size table
+  mFreeSize.insert(std::pair<size_t, MemoryBlock>(size, temp)); // add page to size table
   mFreeLoc.insert(std::pair<void*, MemoryBlock>(page, temp));         // add page to loc table
 }
 
@@ -436,7 +456,7 @@ void MemoryManager::AddPageToFree(void* page)
 ******************************************************************************/
 void MemoryManager::AddBlockToFree(MemoryBlock& block)
 {
-  mFreeSize.insert(std::pair<unsigned int, MemoryBlock>(block.Size(), block));
+  mFreeSize.insert(std::pair<size_t, MemoryBlock>(block.Size(), block));
   mFreeLoc.insert(std::pair<void*, MemoryBlock>(block.MemoryLocation(), block));
 }
 
@@ -452,16 +472,17 @@ void MemoryManager::AddBlockToFree(MemoryBlock& block)
   a bool indicating whether to move the heap right or left in memory, if true
   moves right, else moves left
 ******************************************************************************/
-void MemoryManager::MoveBlock(MemoryBlock& block, int amount, bool right)
+void MemoryManager::MoveBlock(MemoryBlock& block, size_t amount, bool right)
 {
+  int size = (int)amount;
 
   // if we are moving heap left
   if (!right)
   {
-    amount = -amount; // flip amount
+    size = -size; // flip amount
   }
 
-  block = MemoryBlock((void*)((uintptr_t)(block.MemoryLocation()) + amount), block.Size() - amount);
+  block = MemoryBlock((void*)((uintptr_t)(block.MemoryLocation()) + size), block.Size() - amount);
 }
 
 /*!****************************************************************************

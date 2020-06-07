@@ -64,7 +64,7 @@
   the size of the block the comes directly before this block in memory
 ******************************************************************************/
 MemoryBlock::MemoryBlock(void* location,
-                         unsigned int size) : 
+                         size_t size) : 
                          mMemoryLocation(location),
                          mSize(size)
 {
@@ -104,7 +104,7 @@ void* const MemoryBlock::MemoryLocation(void) const
 \return
   the size of the memory being held by the block
 ******************************************************************************/
-unsigned int MemoryBlock::Size(void) const
+size_t MemoryBlock::Size(void) const
 {
   return mSize;
 }

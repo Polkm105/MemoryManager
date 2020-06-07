@@ -45,7 +45,7 @@ class MemoryPage
   public:
     
     MemoryPage(void);
-    MemoryPage(void* ptr, unsigned int size);
+    MemoryPage(void* ptr, size_t size);
 
     ~MemoryPage() = default;
 
@@ -56,6 +56,6 @@ class MemoryPage
 
   private:
     
-    void* mPtr;         // pointer to the page memory
-    unsigned int mSize; // size of the page in bytes
+    void* mPtr;   // pointer to the page memory
+    size_t mSize; // size of the page in bytes
 };

@@ -16,6 +16,9 @@
     <Filter Include="Source\Sizes">
       <UniqueIdentifier>{b1181eb8-09b1-467a-9548-847f63d4b309}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Allocator">
+      <UniqueIdentifier>{b703a9ae-8cce-4c1e-9ee0-1aa429d05f69}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Stub.cpp">
@@ -52,6 +55,9 @@
     </ClInclude>
     <ClInclude Include="Source\MemoryPage.h">
       <Filter>Source\Pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\MemoryAllocator.h">
+      <Filter>Source\Allocator</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

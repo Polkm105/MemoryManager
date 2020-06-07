@@ -43,13 +43,13 @@ class MemoryBlock
   public:
     
     MemoryBlock(void);
-    MemoryBlock(void* location, unsigned int size);
+    MemoryBlock(void* location, size_t size);
     MemoryBlock(const MemoryBlock& block);
     ~MemoryBlock(void) = default;
 
     void* const MemoryLocation(void) const;
 
-    unsigned int Size(void) const;
+    size_t Size(void) const;
 
     friend bool operator<(const MemoryBlock& left, const MemoryBlock& right);
 
@@ -60,5 +60,5 @@ class MemoryBlock
   private:
 
     void* mMemoryLocation;  //!< the address of the memory
-    unsigned int mSize;     //!< the number of bytes allocated for the block
+    size_t mSize;           //!< the number of bytes allocated for the block
 };

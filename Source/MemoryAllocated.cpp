@@ -43,7 +43,7 @@
 // Public Class Functions
 //-----------------------------------------------------------------------------
 
-MemoryAllocated::MemoryAllocated(unsigned int size) :
+MemoryAllocated::MemoryAllocated(size_t size) :
                                  size(size)
 {
 }

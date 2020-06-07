@@ -55,12 +55,12 @@ int main(void)
     {
       amount = (i % 40 + 1) * 40;
       //amount = i;
-      buffer[i] = (char*)New(sizeof(char) * amount);
+      buffer[i] = new char[amount];
     }
 
     for (int i = 0; i < 500; ++i)
     {
-      Delete(buffer[i]);
+      delete [] buffer[i];
     }
   }
   

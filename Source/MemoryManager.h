@@ -33,9 +33,13 @@
 // Public Functions
 //-----------------------------------------------------------------------------
 
-void* New(unsigned int size);
+void* operator new(size_t size);
 
-void Delete(void* ptr);
+void* operator new[](size_t size);
+
+void operator delete(void* ptr);
+
+void operator delete[](void* ptr);
 
 void MemoryManagerInit(void);
 

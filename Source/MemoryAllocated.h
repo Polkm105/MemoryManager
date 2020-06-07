@@ -43,7 +43,7 @@ class MemoryAllocated
   public:
 
     MemoryAllocated(void) = default;
-    MemoryAllocated(unsigned int size);
+    MemoryAllocated(size_t size);
 
-    unsigned int size;     //!< the amount of memory the user has
+    size_t size;     //!< the amount of memory the user has
 };

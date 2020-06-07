@@ -50,7 +50,7 @@ MemoryPage::MemoryPage(void) :
 {
 }
 
-MemoryPage::MemoryPage(void* ptr, unsigned int size) :
+MemoryPage::MemoryPage(void* ptr, size_t size) :
                        mPtr(ptr),
                        mSize(size)
 {

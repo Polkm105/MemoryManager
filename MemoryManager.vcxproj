@@ -149,6 +149,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\MemoryAllocated.h" />
+    <ClInclude Include="Source\MemoryAllocator.h" />
     <ClInclude Include="Source\MemoryBlock.h" />
     <ClInclude Include="Source\MemoryManager.h" />
     <ClInclude Include="Source\MemoryPage.h" />
