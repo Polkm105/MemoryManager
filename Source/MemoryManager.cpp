@@ -47,12 +47,16 @@ class MemoryManager
 public:
 
   MemoryManager(void);
+  ~MemoryManager(void) = default;
 
+  void Init(void);
+  void Shutdown(void);
   void* Allocate(size_t memSize);
   void Destroy(void* ptr);
 
-  friend void MemoryManagerInit(void);
-  friend void MemoryManagerShutdown(void);
+  MemoryManager& operator=(const MemoryManager& rhs);
+
+  bool isInitialized = false;
 
 private:
 
@@ -87,40 +91,7 @@ MANAGER_LOC_TABLE::iterator SearchLocTable(void* ptr, MANAGER_LOC_TABLE& table);
 // Public Functions
 //-----------------------------------------------------------------------------
 
-/*!****************************************************************************
-\brief
-  Allocates all pages and initializes the heap of the memory manager
-******************************************************************************/
-void MemoryManagerInit(void)
-{
-  // for all pages in the manager
-  for (unsigned int i = 0; i < 20; ++i)
-  {
-    void* page = manager.AllocatePage();  // allocate a new page
 
-    MemoryBlock temp(page, PAGE_SIZE);
-
-    manager.mFreeLoc.insert(std::pair<void*, MemoryBlock>(temp.MemoryLocation(), temp));  // insert new block into free loc table
-    manager.mFreeSize.insert(std::pair<size_t, MemoryBlock>(temp.Size(), temp));
-  }
-
-  manager.GetHeapFromFreeMap(); // get the heap
-}
-
-/*!****************************************************************************
-\brief
-  frees all dynamic MemoryManager memory
-******************************************************************************/
-void MemoryManagerShutdown(void)
-{
-  size_t size = manager.mPageVec.size();
-  
-  // for all allocated pages in manager
-  for (size_t i = 0; i < size; ++i)
-  {
-    manager.mPageVec[i].Destroy();  // free current page
-  }
-}
 
 /*!****************************************************************************
 \brief
@@ -135,8 +106,16 @@ void MemoryManagerShutdown(void)
 void* operator new(size_t size)
 {
   if (size)
-  {
-    return manager.Allocate(size);
+  {   
+      // if manager is not initialized
+    if (!manager.isInitialized)
+    {
+      return MemoryAllocator<char>().allocate(size);  // allocate from the memory allocator
+    }
+    else
+    {
+      return manager.Allocate(size);
+    }
   }
 
   return NULL;
@@ -146,7 +125,15 @@ void* operator new[](size_t size)
 {
   if (size)
   {
-    return manager.Allocate(size);
+    // if manager is not initialized
+    if (!manager.isInitialized)
+    {
+      return MemoryAllocator<char>().allocate(size);  // allocate from the memory allocator
+    }
+    else
+    {
+      return manager.Allocate(size);
+    }
   }
 
   return NULL;
@@ -163,7 +150,14 @@ void operator delete(void* ptr)
 {
   if (ptr)
   {
-    manager.Destroy(ptr);
+    if (!manager.isInitialized)
+    {
+      MemoryAllocator<char>().deallocate(static_cast<char*>(ptr));
+    }
+    else
+    {
+      manager.Destroy(ptr);
+    }
   }
 }
 
@@ -171,8 +165,25 @@ void operator delete[](void* ptr)
 {
   if (ptr)
   {
-    manager.Destroy(ptr);
+    if (!manager.isInitialized)
+    {
+      MemoryAllocator<char>().deallocate(static_cast<char*>(ptr));
+    }
+    else
+    {
+      manager.Destroy(ptr);
+    }
   }
+}
+
+void MemoryManagerInit(void)
+{
+  manager.Init();
+}
+
+void MemoryManagerShutdown(void)
+{
+  manager.Shutdown();
 }
 
 //-----------------------------------------------------------------------------
@@ -256,6 +267,46 @@ MemoryManager::MemoryManager(void) :
   mFreeSize(),
   mFreeLoc()
 {
+  isInitialized = true;
+}
+
+/*!****************************************************************************
+\brief
+  Allocates all pages and initializes the heap of the memory manager
+******************************************************************************/
+void MemoryManager::Init(void)
+{
+  // for all pages in the manager
+  for (unsigned int i = 0; i < 20; ++i)
+  {
+    void* page = manager.AllocatePage();  // allocate a new page
+
+    MemoryBlock temp(page, PAGE_SIZE);
+
+    manager.mFreeLoc.insert(std::pair<void*, MemoryBlock>(temp.MemoryLocation(), temp));  // insert new block into free loc table
+    manager.mFreeSize.insert(std::pair<size_t, MemoryBlock>(temp.Size(), temp));
+  }
+
+  manager.GetHeapFromFreeMap(); // get the heap
+
+  isInitialized = true;
+}
+
+/*!****************************************************************************
+\brief
+  frees all dynamic MemoryManager memory
+******************************************************************************/
+void MemoryManager::Shutdown(void)
+{
+  size_t size = manager.mPageVec.size();
+
+  // for all allocated pages in manager
+  for (size_t i = 0; i < size; ++i)
+  {
+    manager.mPageVec[i].Destroy();  // free current page
+  }
+
+  isInitialized = false;
 }
 
 /*!****************************************************************************
@@ -338,6 +389,15 @@ void MemoryManager::Destroy(void* ptr)
   mFreeSize.insert(std::pair<size_t, MemoryBlock>(memSize, temp));
 }
 
+MemoryManager& MemoryManager::operator=(const MemoryManager& rhs)
+{
+  mHeap = rhs.mHeap;
+  mFreeSize = rhs.mFreeSize;
+  mFreeLoc = rhs.mFreeLoc;
+  mPageVec = rhs.mPageVec;
+
+  return *this;
+}
 
 //-----------------------------------------------------------------------------
 // Private Class Functions

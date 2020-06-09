@@ -23,6 +23,21 @@
 // Private Consts
 //-----------------------------------------------------------------------------
 
+class Temp
+{
+  public:
+    Temp(std::string&& name);
+
+  private:
+    std::string mName;
+};
+
+Temp::Temp(std::string&& string) : mName(string)
+{
+}
+
+Temp temp("Test");
+
 //-----------------------------------------------------------------------------
 // Private Classes
 //-----------------------------------------------------------------------------
@@ -87,6 +102,8 @@ int main(void)
   PrintTimeDiff(startTime, "new (1000 int test)");
 
   MemoryManagerShutdown();
+
+  return 0;
 }
 
 //-----------------------------------------------------------------------------

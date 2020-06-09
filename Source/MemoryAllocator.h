@@ -18,6 +18,7 @@
 //-----------------------------------------------------------------------------
 
 #include <stdlib.h>
+#include <stddef.h>
 #include <limits>
 #include <utility>
 #include <new>
@@ -67,7 +68,7 @@ class MemoryAllocator
     template <class U>
     MemoryAllocator(const MemoryAllocator<U>& other){}
 
-    pointer allocate(const size_type numObjects, const_void_pointer hint = NULL) const
+    pointer allocate(const size_type numObjects) const
     {
       if ((numObjects * sizeof(T)) > static_cast<size_type>(-1))
       {
@@ -88,7 +89,14 @@ class MemoryAllocator
       return temp;
     }
 
-    void deallocate(pointer ptr, size_type numObjects)
+    template <class U>
+    pointer allocate(const size_type numObjects, const_void_pointer hint) const
+    {
+      hint;
+      return allocate(numObjects);
+    }
+
+    void deallocate(pointer ptr, size_type numObjects = 0) const
     {
       free(ptr);
     }
@@ -99,15 +107,21 @@ class MemoryAllocator
     }
 
     template <class... Args>
-    void construct(T* const ptr, Args&& ...args)
+    void construct(T* const ptr, Args&& ...args) const
     {
       void* const newPtr = static_cast<void*>(ptr);
 
-      new(ptr)T(std::forward<Args>(args)...);
+      new(newPtr)T(std::forward<Args>(args)...);
     }
 
-    void destroy(T* ptr)
+    void destroy(T* const ptr) const
     {
       ptr->~T();
     }
+
+    bool operator==(const MemoryAllocator& rhs) const
+    {
+      return true;
+    }
+
 };
