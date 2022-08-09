@@ -181,6 +181,16 @@ void MemoryManagerInit(void)
   manager.Init();
 }
 
+void* Alloc(size_t size)
+{
+  return manager.Allocate(size);
+}
+
+void Delete(void* ptr)
+{
+  manager.Destroy(ptr);
+}
+
 void MemoryManagerShutdown(void)
 {
   manager.Shutdown();

@@ -56,50 +56,27 @@ void PrintTimeDiff(const std::chrono::system_clock::time_point& startTime, const
 
 int main(void)
 {
-  MemoryManagerInit();
-
-  char* buffer[2000];
-
   int amount;
 
   auto startTime = GetTime();
 
-  for (int j = 0; j < 300; ++j)
+  for (int j = 0; j < 100000; ++j)
   {
-    for (int i = 0; i < 500; ++i)
-    {
-      amount = (i % 40 + 1) * 40;
-      //amount = i;
-      buffer[i] = new char[amount];
-    }
-
-    for (int i = 0; i < 500; ++i)
-    {
-      delete [] buffer[i];
-    }
+    void* temp = Alloc(1000 * sizeof(char));
+    Delete(temp);
   }
   
-  PrintTimeDiff(startTime, "MemoryManager (1000 int test)");
-
+  PrintTimeDiff(startTime, "MemoryManager");
 
   startTime = GetTime();
 
-  for (int j = 0; j < 300; ++j)
+  for (int j = 0; j < 100000; ++j)
   {
-    for (int i = 0; i < 500; ++i)
-    {
-      amount = (i % 40 + 1) * 40;
-      //amount = i;
-      buffer[i] = new char[amount];
-    }
-
-    for (int i = 0; i < 500; ++i)
-    {
-      delete [] buffer[i];
-    }
+    char* temp = new char[1000];
+    delete [] temp;
   }
 
-  PrintTimeDiff(startTime, "new (1000 int test)");
+  PrintTimeDiff(startTime, "new");
 
   MemoryManagerShutdown();
 

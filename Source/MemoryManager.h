@@ -43,6 +43,9 @@ void operator delete[](void* ptr);
 
 void MemoryManagerInit(void);
 
+void* Alloc(size_t size);
+void Delete(void* ptr);
+
 void MemoryManagerShutdown(void);
 
 //-----------------------------------------------------------------------------
